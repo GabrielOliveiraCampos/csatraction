@@ -1,0 +1,197 @@
+/**
+ * CSAT Sellfy Group — Backend único (Web App)
+ * ---------------------------------------------------------------
+ * Este script atende TODOS os pilares/produtos com CSAT (Pilar 1-6,
+ * Traction, etc), incluindo agora o CSAT SEMANAL do Traction.
+ *
+ * Arquitetura (não alterar sem necessidade real):
+ *  - openById (nunca getActiveSpreadsheet) — obrigatório em Web App.
+ *  - Escrita por NOME de cabeçalho, nunca por posição fixa de array.
+ *    Isso permite reordenar colunas na planilha sem quebrar o grava-
+ *    dor, e permite adicionar colunas novas (como "Semana") sem
+ *    impactar os pilares que não usam esse campo.
+ *  - LockService: evita corrida em picos de envio simultâneo.
+ *  - Token simples: camada mínima contra POST externo direto na URL.
+ *
+ * IMPORTANTE — DEPLOY:
+ *  Toda vez que este código for editado, é preciso reimplantar como
+ *  "Nova versão" em Implantar → Gerenciar implantações. Só salvar o
+ *  código NÃO atualiza a URL publicada.
+ *
+ *  Implantar como: App da Web
+ *  Executar como: Eu
+ *  Quem pode acessar: Qualquer pessoa (NÃO "qualquer pessoa no domínio")
+ * ---------------------------------------------------------------
+ */
+
+// ================= CONFIGURAÇÃO =================
+var SHEET_ID = 'COLE_AQUI_O_ID_DA_PLANILHA_COMPARTILHADA_DE_CSAT';
+var SHEET_NAME = 'Respostas'; // aba já usada pelos outros pilares
+var TOKEN_ESPERADO = 'COLE_AQUI_UM_TOKEN_SECRETO'; // ex: gerar com Utilities.getUuid()
+
+// Cabeçalhos esperados na aba "Respostas". Se algum não existir ainda
+// na planilha (ex: "Semana", usado só pelo Traction), o script cria a
+// coluna automaticamente na primeira execução — os pilares antigos
+// simplesmente ficam com essa célula em branco.
+var CAMPOS = ['Data', 'Pilar', 'Semana', 'Nota (1-5)', 'Rótulo',
+              'Motivo (nota 1-3)', 'Destaques (nota 4-5)', 'Depoimento',
+              'Nome', 'Empresa'];
+// ==================================================
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000); // aguarda até 15s por outro processo liberar
+
+  try {
+    var p = (e && e.parameter) ? e.parameter : {};
+
+    if (p.token !== TOKEN_ESPERADO) {
+      return respostaJson({ ok: false, erro: 'token_invalido' });
+    }
+
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(CAMPOS);
+    }
+
+    var headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+
+    // Garante que toda coluna de CAMPOS existe no cabeçalho real da
+    // planilha. Se faltar (ex: "Semana" ainda não existe porque só o
+    // Traction usa), adiciona ao final sem tocar nas colunas existentes.
+    CAMPOS.forEach(function (nomeCampo) {
+      if (headers.indexOf(nomeCampo) === -1) {
+        sheet.getRange(1, headers.length + 1).setValue(nomeCampo);
+        headers.push(nomeCampo);
+      }
+    });
+
+    var valoresPorCampo = {
+      'Data': p.data || new Date().toISOString(),
+      'Pilar': p.pilar || '',
+      'Semana': p.semana || '',
+      'Nota (1-5)': p.csat || '',
+      'Rótulo': p.csat_rotulo || '',
+      'Motivo (nota 1-3)': p.motivo || '',
+      'Destaques (nota 4-5)': p.destaques || '',
+      'Depoimento': p.depoimento || '',
+      'Nome': p.nome || '',
+      'Empresa': p.empresa || ''
+    };
+
+    // Monta a linha na ORDEM REAL do cabeçalho da planilha, não na
+    // ordem de CAMPOS — assim, reordenar colunas manualmente na
+    // planilha nunca desalinha os dados.
+    var linha = headers.map(function (h) {
+      return Object.prototype.hasOwnProperty.call(valoresPorCampo, h) ? valoresPorCampo[h] : '';
+    });
+
+    sheet.appendRow(linha);
+
+    return respostaJson({ ok: true });
+
+  } catch (err) {
+    return respostaJson({ ok: false, erro: String(err) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function respostaJson(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Cria (ou verifica) a aba "Resumo CSAT" com cabeçalhos e fórmulas já
+ * prontas. Rodar UMA VEZ manualmente no editor do Apps Script (▶️,
+ * selecionando esta função) — não precisa rodar de novo depois, as
+ * fórmulas continuam recalculando sozinhas a cada resposta nova.
+ *
+ * É idempotente: se a aba já existir, a função não duplica nada — só
+ * avisa no Logger e encerra. Se quiser reconstruir do zero, apague a
+ * aba manualmente antes de rodar de novo.
+ */
+function criarAbaResumoCSAT() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var nomeAba = 'Resumo CSAT';
+
+  if (ss.getSheetByName(nomeAba)) {
+    Logger.log('A aba "' + nomeAba + '" já existe — nada foi alterado. ' +
+      'Apague a aba manualmente antes de rodar esta função de novo, se quiser recriar.');
+    return;
+  }
+
+  var aba = ss.insertSheet(nomeAba);
+
+  // ---- Seção 1: Resumo geral por Pilar ----
+  aba.getRange('A1').setValue('RESUMO CSAT — POR PILAR').setFontWeight('bold');
+  aba.getRange('A2:E2').setValues([[
+    'Pilar', 'Total respostas', 'Positivas (4-5)', 'CSAT (%)', 'Nota média'
+  ]]).setFontWeight('bold');
+
+  aba.getRange('A3').setFormula(
+    '=SEERRO(ÚNICO(FILTRO(Respostas!B2:B;Respostas!B2:B<>""));"")'
+  );
+  aba.getRange('B3').setFormula('=SEERRO(CONTSE(Respostas!B:B;A3);0)');
+  aba.getRange('C3').setFormula('=SEERRO(CONTSES(Respostas!B:B;A3;Respostas!D:D;">=4");0)');
+  aba.getRange('D3').setFormula('=SEERRO(C3/B3*100;0)');
+  aba.getRange('E3').setFormula('=SEERRO(MÉDIASES(Respostas!D:D;Respostas!B:B;A3);0)');
+
+  // Preenche B:E até a linha 20 (margem para pilares futuros); A é
+  // fórmula de matriz e não se arrasta.
+  var linhaFinalSecao1 = 20;
+  aba.getRange('B3:E3').copyTo(aba.getRange('B4:E' + linhaFinalSecao1));
+
+  // ---- Seção 2: Traction, por semana ----
+  aba.getRange('A23').setValue('RESUMO CSAT — TRACTION POR SEMANA').setFontWeight('bold');
+  aba.getRange('A24:E24').setValues([[
+    'Semana', 'Total respostas', 'Positivas (4-5)', 'CSAT (%)', 'Nota média'
+  ]]).setFontWeight('bold');
+
+  aba.getRange('A25').setFormula(
+    '=SEERRO(ÚNICO(FILTRO(Respostas!C2:C;Respostas!B2:B="Sellfy Traction";Respostas!C2:C<>""));"")'
+  );
+  aba.getRange('B25').setFormula(
+    '=SEERRO(CONTSES(Respostas!B:B;"Sellfy Traction";Respostas!C:C;A25);0)'
+  );
+  aba.getRange('C25').setFormula(
+    '=SEERRO(CONTSES(Respostas!B:B;"Sellfy Traction";Respostas!C:C;A25;Respostas!D:D;">=4");0)'
+  );
+  aba.getRange('D25').setFormula('=SEERRO(C25/B25*100;0)');
+  aba.getRange('E25').setFormula(
+    '=SEERRO(MÉDIASES(Respostas!D:D;Respostas!B:B;"Sellfy Traction";Respostas!C:C;A25);0)'
+  );
+
+  var linhaFinalSecao2 = 32;
+  aba.getRange('B25:E25').copyTo(aba.getRange('B26:E' + linhaFinalSecao2));
+
+  aba.autoResizeColumns(1, 5);
+  Logger.log('Aba "' + nomeAba + '" criada com sucesso.');
+}
+
+/**
+ * Função de teste manual — rodar direto no editor do Apps Script
+ * (não via Web App) pra validar a lógica de escrita sem precisar
+ * de um deploy. Confirme no painel de Execuções que rodou "Concluído".
+ */
+function testeManual() {
+  var evento = {
+    parameter: {
+      token: TOKEN_ESPERADO,
+      pilar: 'Sellfy Traction',
+      semana: 'Semana 1 – Traction',
+      csat: '5',
+      csat_rotulo: 'Muito satisfeito',
+      destaques: 'Clareza estratégica; Resultados gerados',
+      depoimento: 'Teste de escrita via testeManual()',
+      nome: 'Teste',
+      empresa: 'Empresa Teste'
+    }
+  };
+  var resultado = doPost(evento);
+  Logger.log(resultado.getContent());
+}
