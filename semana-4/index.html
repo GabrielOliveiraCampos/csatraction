@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CSAT – Semana 4: Traction | Sellfy Group</title>
+<title>CSAT Semana 4 · Traction | Sellfy Group</title>
 <style>
   :root{
     --laranja:#FE4F18;--laranja-esc:#D9430F;--laranja-claro:#FFF1EC;
@@ -97,7 +97,7 @@
 
     <form id="form" class="body" novalidate>
       <div class="step-label">Etapa 1 de 2 · leva 5 segundos</div>
-      <div class="pergunta">Quão satisfeito(a) você está com a <strong>Semana 4</strong> do Traction — o conteúdo, os encontros e o que você avançou nesta semana? <span class="req">*</span></div>
+      <div class="pergunta">Quão satisfeito(a) você está com a <strong>Semana 4</strong> do Traction, incluindo o conteúdo, os encontros e o que você avançou nesta semana? <span class="req">*</span></div>
       <div class="csat" id="csat"></div>
       <div class="selrot" id="selrot"></div>
       <div class="ends"><span>1 · Muito insatisfeito</span><span>Muito satisfeito · 5</span></div>
@@ -110,19 +110,22 @@
           <div class="fu-titulo">Queremos melhorar isso 🙏</div>
           <div class="fu-sub">Seu retorno aqui é o que mais nos ajuda a corrigir a rota.</div>
           <div class="campo">
-            <label class="rotulo" for="motivo">O que aconteceu nesta semana e o que podemos fazer melhor?</label>
-            <textarea id="motivo" placeholder="Pode ser direto — quanto mais específico, melhor."></textarea>
+            <label class="rotulo" for="motivo">O que aconteceu nesta semana e o que podemos fazer melhor? <span class="req">*</span></label>
+            <textarea id="motivo" placeholder="Pode ser direto: quanto mais específico, melhor."></textarea>
+            <div class="err" id="err-motivo">Por favor, conte o que aconteceu.</div>
           </div>
         </div>
 
         <div id="ramo-alto" style="display:none">
           <div class="fu-titulo">Que bom saber disso! 🎉</div>
           <div class="fu-sub">Nos conte o que mais fez a diferença pra você.</div>
-          <label class="rotulo">O que mais se destacou nesta semana? <span class="opt">(marque quantas quiser)</span></label>
+          <label class="rotulo">O que mais se destacou nesta semana? <span class="req">*</span> <span class="opt">(marque ao menos uma)</span></label>
           <div class="chips" id="chips"></div>
+          <div class="err" id="err-destaques">Selecione ao menos uma opção.</div>
           <div class="campo">
-            <label class="rotulo" for="depoimento">Quer deixar um depoimento? <span class="opt">(opcional · podemos compartilhar)</span></label>
+            <label class="rotulo" for="depoimento">Deixe um depoimento sobre a semana <span class="req">*</span> <span class="opt">(podemos compartilhar)</span></label>
             <textarea id="depoimento" placeholder="Em poucas palavras, o resultado ou a experiência que você teve."></textarea>
+            <div class="err" id="err-depoimento">Por favor, escreva um depoimento.</div>
           </div>
         </div>
 
@@ -154,7 +157,7 @@
 
 <script>
 /* =====================================================================
-   CONFIG – preencher endpoint e token com os valores gerados no deploy
+   CONFIG: preencher endpoint e token com os valores gerados no deploy
    do Apps Script (ver README.md). O mesmo endpoint/token serve para os
    6 arquivos; só "semana" muda em cada um.
    ===================================================================== */
@@ -162,7 +165,7 @@ const CONFIG = {
   endpoint: "https://script.google.com/macros/s/AKfycbwED8qF47qWyJJ1a5XUrv34mJR4ZMBB7wEbcCAWbSiNvawx_fyYlGKnrNNruya_aZXrSg/exec",
   token: "534522ba-e725-45ec-aacb-305bcef63489",
   pilar: "Sellfy Traction",
-  semana: "Semana 4 – Traction"
+  semana: "Semana 4 · Traction"
 };
 /* ===================================================================== */
 
@@ -194,6 +197,7 @@ DESTAQUES.forEach(function(txt){
     c.setAttribute('aria-pressed', on?'false':'true');
     if(on){ destaquesSel = destaquesSel.filter(function(x){return x!==txt;}); }
     else { destaquesSel.push(txt); }
+    if(destaquesSel.length>0){ document.getElementById('err-destaques').classList.remove('show'); }
   });
   chipsBox.appendChild(c);
 });
@@ -239,6 +243,35 @@ document.getElementById('form').addEventListener('submit',function(e){
     document.getElementById('csat').scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
+  if(nota<=3){
+    var motivoEl=document.getElementById('motivo');
+    if(motivoEl.value.trim()===''){
+      document.getElementById('err-motivo').classList.add('show');
+      motivoEl.focus();
+      motivoEl.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    document.getElementById('err-motivo').classList.remove('show');
+  }
+
+  if(nota>=4){
+    if(destaquesSel.length===0){
+      document.getElementById('err-destaques').classList.add('show');
+      chipsBox.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    document.getElementById('err-destaques').classList.remove('show');
+
+    var depoimentoEl=document.getElementById('depoimento');
+    if(depoimentoEl.value.trim()===''){
+      document.getElementById('err-depoimento').classList.add('show');
+      depoimentoEl.focus();
+      depoimentoEl.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    document.getElementById('err-depoimento').classList.remove('show');
+  }
+
   var nomeEl=document.getElementById('nome');
   if(nomeEl.value.trim()===''){
     document.getElementById('err-nome').classList.add('show');
