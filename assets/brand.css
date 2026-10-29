@@ -1,0 +1,39 @@
+/* Identidade visual Sellfy Group — tokens compartilhados */
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Shadows+Into+Light&display=swap");
+
+:root{
+  --laranja:#FF5319;
+  --laranja-esc:#E0420C;
+  --laranja-claro:#FFEDE5;
+  --creme:#F1F0EB;
+  --creme-2:#E7E5DD;
+  --carvao:#0C0F12;
+  --grafite:#15191D;
+  --grafite-2:#1E2328;
+  --linha-escura:#2A3036;
+  --tinta:#141414;
+  --cinza:#5F625F;
+  --cinza-claro:#9A9C97;
+  --borda:#DEDBD2;
+  --branco:#FFFFFF;
+  --vermelho:#D93A2B;
+  --amarelo:#E9A53A;
+  --verde:#24965A;
+
+  --f-titulo:"Bebas Neue", Impact, "Arial Narrow", sans-serif;
+  --f-texto:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --f-mao:"Shadows Into Light", cursive;
+
+  --raio:18px;
+  --raio-sm:12px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--f-texto);line-height:1.5;-webkit-font-smoothing:antialiased;color:var(--tinta);background:var(--creme)}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--laranja);outline-offset:2px}
+
+.logo{display:block;width:44px;height:44px;border-radius:11px}
+.titulo{font-family:var(--f-titulo);font-weight:400;letter-spacing:.02em;line-height:.95}
+.assinatura{font-family:var(--f-mao);color:var(--laranja)}

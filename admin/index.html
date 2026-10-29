@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel de Avaliações | Sellfy Group</title>
+<link rel="icon" href="/assets/logo-sellfy.png">
+<link rel="stylesheet" href="/assets/brand.css">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="topo">
+    <a class="marca" href="/admin">
+      <img class="logo" src="/assets/logo-sellfy.png" alt="">
+      <div><div class="nome">Sellfy Group</div><div class="sub">Painel de Avaliações</div></div>
+    </a>
+    <span class="selo">Acesso interno · Operação</span>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">CSAT &amp; NPS</p>
+    <h1 class="titulo">Qual programa você quer avaliar?</h1>
+    <p>Escolha o produto, copie o link da pesquisa certa e envie para o cliente. Ele só enxerga aquela pesquisa, nada do painel.</p>
+  </section>
+
+  <section class="produtos" id="produtos"></section>
+
+  <section class="como">
+    <div class="passo"><div class="n">01</div><p><b>Escolha o produto:</b> Scale, ICV, Traction ou Journey.</p></div>
+    <div class="passo"><div class="n">02</div><p><b>Personalize</b> com o nome da empresa do cliente (opcional).</p></div>
+    <div class="passo"><div class="n">03</div><p><b>Copie o link ou a mensagem</b> da etapa/pilar e envie ao cliente.</p></div>
+    <div class="passo"><div class="n">04</div><p><b>As respostas</b> caem direto na planilha de CSAT do produto.</p></div>
+  </section>
+
+  <footer class="rodape-pag"><span>@sellfygroup · Assessoria Comercial</span><span>Painel interno. Não compartilhe este endereço com clientes</span></footer>
+</div>
+
+<script src="/assets/pesquisas.js"></script>
+<script src="/admin/aviso.js"></script>
+<script>
+(function () {
+  var seta = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var box = document.getElementById("produtos");
+  Object.keys(window.SELLFY.produtos).forEach(function (id) {
+    var p = window.SELLFY.produtos[id];
+    var nps = p.pesquisas.filter(function (x) { return x.tipo === "nps"; }).length;
+    var csat = p.pesquisas.length - nps;
+    var pills = "";
+    if (nps) pills += '<span class="pill">' + nps + " NPS</span>";
+    if (csat) pills += '<span class="pill">' + csat + " CSAT</span>";
+    var a = document.createElement("a");
+    a.className = "produto " + p.tema;
+    a.href = "/admin/" + id;
+    a.innerHTML = '<div class="sigla">' + p.sigla + '</div><div class="nome">' + p.nome + '</div>' +
+      '<p class="desc">' + p.descricao + '</p>' +
+      '<div class="rodape"><div class="contagem">' + pills + '</div><span class="seta">' + seta + "</span></div>";
+    box.appendChild(a);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel de Avaliações | Sellfy Group</title>
+<link rel="icon" href="/assets/logo-sellfy.png">
+<link rel="stylesheet" href="/assets/brand.css">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="topo">
+    <a class="marca" href="/admin">
+      <img class="logo" src="/assets/logo-sellfy.png" alt="">
+      <div><div class="nome">Sellfy Group</div><div class="sub">Painel de Avaliações</div></div>
+    </a>
+    <span class="selo">Acesso interno · Operação</span>
+  </header>
+
+  <section class="hero">
+    <a class="voltar" href="/admin">← Todos os programas</a>
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 class="titulo" id="titulo"></h1>
+    <p id="descricao"></p>
+  </section>
+
+  <section class="personalizar">
+    <div class="campo">
+      <label for="empresa">Empresa do cliente <span style="text-transform:none;letter-spacing:0;font-weight:400">(opcional)</span></label>
+      <input id="empresa" type="text" placeholder="Ex.: Acme Distribuidora" autocomplete="off">
+    </div>
+    <p class="dica">Se preencher, o campo “empresa” já chega preenchido para o cliente e os links abaixo são atualizados.</p>
+  </section>
+
+  <section class="lista" id="lista"></section>
+
+  <footer class="rodape-pag"><span>@sellfygroup · Assessoria Comercial</span><span>Painel interno. Não compartilhe este endereço com clientes</span></footer>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/assets/pesquisas.js"></script>
+<script src="/admin/aviso.js"></script>
+<script src="/admin/admin.js"></script>
+</body>
+</html>
