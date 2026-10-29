@@ -1,0 +1,20 @@
+{
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/", "destination": "/admin", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/avaliacao/:produto/:pesquisa", "destination": "/avaliacao.html" },
+    { "source": "/admin/:produto(scale|icv|traction|journey)", "destination": "/admin/produto.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/assets/pesquisas.js",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    }
+  ]
+}
