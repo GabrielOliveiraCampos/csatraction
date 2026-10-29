@@ -81,14 +81,20 @@ export default async function middleware(request) {
   if (url.pathname === "/admin/entrar") {
     if (request.method !== "POST") return Response.redirect(new URL("/admin", url), 302);
     const form = await request.formData();
-    const u = String(form.get("usuario") || "").trim();
-    const s = String(form.get("senha") || "").trim();
-    if (u === user && s === pass) {
+    const u = String(form.get("usuario") || "").trim().normalize("NFC");
+    const s = String(form.get("senha") || "").trim().normalize("NFC");
+    const userOk = u.toLowerCase() === user.normalize("NFC").toLowerCase();
+    const passOk = s === pass.normalize("NFC");
+    if (userOk && passOk) {
       return new Response(null, { status: 303, headers: {
         Location: "/admin",
         "Set-Cookie": `${COOKIE}=${esperado}; Path=/admin; Max-Age=${TRINTA_DIAS}; HttpOnly; Secure; SameSite=Lax` } });
     }
-    return html(telaLogin("Usuário ou senha incorretos."), 401);
+    // TEMPORÁRIO: diz qual campo não conferiu, para achar o problema do login
+    const motivo = !u && !s ? "O formulário chegou vazio no servidor."
+      : !userOk ? `O usuário não confere (cadastrado: ${user.length} caracteres, digitado: ${u.length}).`
+      : `A senha não confere (cadastrada: ${pass.length} caracteres, digitada: ${s.length}).`;
+    return html(telaLogin(motivo), 401);
   }
 
   if (lerCookie(request, COOKIE) === esperado) {
