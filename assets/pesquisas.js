@@ -15,7 +15,7 @@
 // (backend/Code.gs). Cole aqui a URL /exec da implantação. Enquanto estiver
 // vazio, o painel mostra um aviso e as respostas NÃO são gravadas.
 var BACKEND = {
-  endpoint: "",
+  endpoint: "https://script.google.com/macros/s/AKfycbzpgb5ReXpPXmtEEKC3wRa8x2jqgJ8WYmxJrRzz5pX0NVMFWQ8XiJZ2o0Soa9wudGkS/exec",
   token: "3855f313-111b-474f-afcf-f78503873d19" // o mesmo TOKEN_ESPERADO do Code.gs
 };
 

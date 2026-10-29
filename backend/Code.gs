@@ -129,7 +129,10 @@ function alertar_(r, classe) {
 function configurar() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   PropertiesService.getScriptProperties().setProperty('PLANILHA_ID', ss.getId());
-  ss.setSpreadsheetLocale('pt_BR');
+  // As fórmulas abaixo usam vírgula (padrão en_US). Monta tudo em en_US e só no fim
+  // troca para pt_BR: o Sheets converte as fórmulas existentes sozinho.
+  ss.setSpreadsheetLocale('en_US');
+  SpreadsheetApp.flush();
   ss.setSpreadsheetTimeZone('America/Sao_Paulo');
 
   var resp = aba_(ss, ABA_RESPOSTAS);
@@ -152,6 +155,8 @@ function configurar() {
       ss.deleteSheet(sh);
     }
   });
+  SpreadsheetApp.flush();
+  ss.setSpreadsheetLocale('pt_BR');
   ss.setActiveSheet(ss.getSheetByName(ABA_PAINEL));
 }
 
