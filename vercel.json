@@ -4,8 +4,8 @@
     { "source": "/", "destination": "/admin", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/avaliacao/:produto/:pesquisa", "destination": "/avaliacao.html" },
-    { "source": "/admin/:produto(scale|icv|traction|journey)", "destination": "/admin/produto.html" }
+    { "source": "/avaliacao/:produto/:pesquisa", "destination": "/avaliacao" },
+    { "source": "/admin/:produto(scale|icv|traction|journey)", "destination": "/admin/produto" }
   ],
   "headers": [
     {
