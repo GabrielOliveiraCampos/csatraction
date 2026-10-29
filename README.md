@@ -1,6 +1,6 @@
 # Sellfy CSAT — Painel unificado (Scale, ICV, Traction e Journey)
 
-Um único site na Vercel com:
+Um único site, hospedado na VPS da Hostinger, com:
 
 - **Painel do administrador** (`/admin`, protegido por usuário e senha): escolhe o produto, vê as pesquisas e copia o link ou uma mensagem pronta para mandar ao cliente.
 - **Página do cliente** (`/avaliacao/<produto>/<pesquisa>`): só o formulário daquela pesquisa. Não tem menu, nem botão de voltar, nem link para o painel.
@@ -22,20 +22,34 @@ assets/
   pesquisas.js    ← lista de produtos e pesquisas, endpoint e token de cada produto
   brand.css       cores e fontes Sellfy (Bebas Neue, Inter, Shadows Into Light)
   form.css/js     visual e lógica do formulário
-middleware.js     senha do painel (Vercel)
-vercel.json       rotas
+deploy/nginx.conf rotas, senha do painel e cabeçalhos (Nginx da VPS)
+.github/workflows deploy automático para a VPS a cada push
 backend/Code.gs   backend do Google Apps Script (CSAT + NPS)
 ```
 
 **Para adicionar, renomear ou remover uma pesquisa, edite só `assets/pesquisas.js`.** O painel e o formulário se atualizam sozinhos.
 
-## Deploy na Vercel
+## Hospedagem (VPS Hostinger)
 
-1. Suba este repositório no GitHub e importe na Vercel (Framework: **Other**, sem build).
-2. Em **Settings → Environment Variables**, crie:
-   - `ADMIN_USER` — ex.: `sellfy`
-   - `ADMIN_PASSWORD` — uma senha forte
-3. Faça um novo deploy. Abrir o domínio leva ao `/admin`, que pede usuário e senha. Sem as variáveis, o painel fica bloqueado.
+O site é estático e roda no Nginx da VPS. A cada push na `main`, o GitHub Actions (`.github/workflows/deploy.yml`) copia os arquivos para `/var/www/sellfy-csat` na VPS.
+
+### Instalação (uma vez só)
+
+1. **DNS (Squarespace)**: em Domínios → sellfygroup.com → DNS, crie um registro **A** com host `avaliacao` apontando para o IP da VPS.
+2. **Na VPS** (SSH como root):
+   ```bash
+   apt install -y nginx apache2-utils certbot python3-certbot-nginx
+   mkdir -p /var/www/sellfy-csat
+   htpasswd -c /etc/nginx/.htpasswd-sellfy sellfy        # pede a senha do painel
+   ```
+   Copie `deploy/nginx.conf` para `/etc/nginx/sites-available/sellfy-avaliacao`, ative com
+   `ln -s /etc/nginx/sites-available/sellfy-avaliacao /etc/nginx/sites-enabled/` e rode `nginx -t && systemctl reload nginx`.
+   Depois: `certbot --nginx -d avaliacao.sellfygroup.com` (HTTPS gratuito, renova sozinho).
+3. **Chave de deploy**: na VPS, `ssh-keygen -t ed25519 -f ~/.ssh/deploy_github -N ""` e `cat ~/.ssh/deploy_github.pub >> ~/.ssh/authorized_keys`.
+4. **GitHub → Settings → Secrets and variables → Actions**: crie `VPS_HOST` (IP), `VPS_USER` (ex.: `root`) e `VPS_SSH_KEY` (conteúdo de `~/.ssh/deploy_github`, a chave privada).
+5. Em **Actions → Deploy na VPS → Run workflow** (ou qualquer push na `main`). Abra `https://avaliacao.sellfygroup.com`: ele leva ao `/admin`, que pede usuário e senha.
+
+Para trocar a senha do painel: `htpasswd /etc/nginx/.htpasswd-sellfy sellfy` na VPS.
 
 ## Respostas (Google Sheets)
 
@@ -58,7 +72,7 @@ Nota baixa também dispara um e-mail para `ALERTA_EMAILS` (no topo do `Code.gs`)
 2. Escolha a função **`configurar`** e clique em **Executar** (autorize o acesso). Ela cria as abas, as cores e as fórmulas.
 3. Escolha **`importarHistoricoTraction`** e execute. Ela traz as respostas reais da planilha antiga do Traction (sem os testes), marcadas como "Semana N (formato antigo)".
 4. **Implantar → Nova implantação → App da Web**. Executar como: **Eu**. Quem pode acessar: **Qualquer pessoa**. Copie a URL `/exec`.
-5. Cole a URL em `assets/pesquisas.js` (`BACKEND.endpoint`) e faça o deploy. Enquanto ela estiver vazia, o painel mostra o aviso "Planilha não conectada" e nada é gravado.
+5. Cole a URL em `assets/pesquisas.js` (`BACKEND.endpoint`) e faça push. Enquanto ela estiver vazia, o painel mostra o aviso "Planilha não conectada" e nada é gravado.
 
 Para mudar o código depois: **Implantar → Gerenciar implantações → Editar → Nova versão**. Assim a URL continua a mesma.
 
