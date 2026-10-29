@@ -21,7 +21,7 @@ a{color:inherit}
 .voltar:hover{color:var(--laranja)}
 
 /* Cards dos produtos */
-.produtos{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.produtos{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
 .produto{position:relative;display:flex;flex-direction:column;min-height:280px;padding:28px;border-radius:22px;
   text-decoration:none;overflow:hidden;transition:transform .2s,box-shadow .2s}
 .produto:hover{transform:translateY(-3px)}
@@ -114,6 +114,7 @@ a{color:inherit}
   .acoes .btn{flex:1 1 auto;justify-content:center}
   .selo{display:none}
   .produto .sigla{font-size:68px}
+  .produtos{grid-template-columns:1fr}
 }
 
 /* Aviso: planilha não conectada (some quando o endpoint é configurado) */
